@@ -1,4 +1,30 @@
 import pdfplumber
+import unicodedata
+
+def clean_text(text: str) -> str:
+    """
+    Normalizes and cleans extracted text by removing non-ASCII characters.
+
+    This function applies NFKD normalization to decompose combined characters 
+    (like accents) and then strips away any characters that cannot be 
+    represented in standard ASCII (such as emojis or complex PDF artifacts).
+
+    Args:
+        text (str): The raw text string extracted from the PDF.
+
+    Returns:
+        str: A cleaned, ASCII-only version of the input text.
+    """
+    # Decompose combined characters (e.g., 'é' becomes 'e' + '´') 
+    # so that the base letter can be preserved during ASCII encoding.
+    normalized_text = unicodedata.normalize("NFKD", text)
+
+    # Convert to ASCII bytes, 'ignore' removes characters that don't fit the schema.
+    # This effectively deletes artifacts like the '' symbol.
+    clean_bytes = normalized_text.encode("ascii", "ignore")
+
+    # Convert the filtered bytes back into a standard Python string.
+    return clean_bytes.decode("utf-8")
 
 def extract_text(resume_path : str) -> str:
     """
@@ -23,14 +49,12 @@ def extract_text(resume_path : str) -> str:
             if page_text:
                 entire_text += page_text + '\n'
 
-    # Replace unknown unicode
-    entire_text = entire_text.replace('\uf0b7', '-') 
-    entire_text = entire_text.replace('\u2022', '-') # Standard unicode bullet
+    # .strip() removes leading/trailing whitespace from the final document 
+    entire_text = entire_text.strip()
 
-    # .strip() removes leading/trailing whitespace from the final document            
-    return entire_text.strip()
+    return clean_text(entire_text)
             
 if __name__ == "__main__":
     # This only runs if you run this file directly
-    test_path = "data/Kayla_Yi_Resume.pdf" 
+    test_path = "data/Resume.pdf" 
     print(extract_text(test_path))
