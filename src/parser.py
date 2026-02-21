@@ -23,6 +23,10 @@ def extract_text(resume_path : str) -> str:
             if page_text:
                 entire_text += page_text + '\n'
 
+    # Replace unknown unicode
+    entire_text = entire_text.replace('\uf0b7', '-') 
+    entire_text = entire_text.replace('\u2022', '-') # Standard unicode bullet
+
     # .strip() removes leading/trailing whitespace from the final document            
     return entire_text.strip()
             
