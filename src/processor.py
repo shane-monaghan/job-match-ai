@@ -1,5 +1,15 @@
 from sentence_transformers import SentenceTransformer, util
+import nltk
+nltk.download('stopwords')
+nltk.download('punkt') # Required for tokenization
+nltk.download('punkt_tab')
+nltk.download('averaged_perceptron_tagger_eng') # The engine that identifies grammar
+nltk.download('universal_tagset') # Simplifies tags to 'NOUN', 'ADJ', etc.
+
 import numpy as np
+
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 def calculate_similarity_score(
     model: SentenceTransformer,
@@ -50,6 +60,30 @@ def load_model(model_name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
     """
     return SentenceTransformer(model_name)
 
+def remove_stop_words(words : list[str], stop_words : list[str]) -> set[str]:
+    filtered_words = [word.lower() for word in words if word.lower() not in stop_words]
+    return set(filtered_words)
+
+def remove_non_alpha(words : list[str]) -> set[str]:
+    filtered_words = [word.lower() for word in words if word.isalpha()]
+    return set(filtered_words)
+
+def remove_short_words(words : list[str], min_length : int) -> set[str]:
+    filtered_words = [word.lower() for word in words if len(word) > min_length]
+    return set(filtered_words)
+
+def remove_non_nouns_adjectives(words : list[str]) -> set[str]:
+    tagged_words = nltk.pos_tag(words, 'universal', 'eng')
+    filtered_words = [word for (word, part_of_speech) in tagged_words if part_of_speech in ['NOUN', 'ADJ']]
+    return filtered_words
+
+def filter_words(words : list[str], stop_words : list[str], min_length : int) -> set[str]:
+    filtered_words = remove_stop_words(words, stop_words)
+    filtered_words = remove_non_alpha(filtered_words)
+    filtered_words = remove_short_words(filtered_words, min_length)
+    filtered_words = remove_non_nouns_adjectives(filtered_words)
+    return set(filtered_words)
+
 if __name__ == "__main__":
     model = load_model('all-MiniLM-L6-v2')
 
@@ -58,3 +92,14 @@ if __name__ == "__main__":
 
     similarity_score = calculate_similarity_score(model, resume_text, job_description_text)
     print(similarity_score)
+
+    resume_words = word_tokenize(resume_text)
+    job_description_words = word_tokenize(job_description_text)
+
+    stop_words = set(stopwords.words('english'))
+
+    filtered_resume_words = filter_words(resume_words, stop_words, 2)
+    filtered_jd_words = filter_words(job_description_words, stop_words, 2)
+    difference = filtered_jd_words - filtered_resume_words
+
+    print(difference)
