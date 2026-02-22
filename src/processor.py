@@ -64,42 +64,41 @@ def remove_stop_words(words : list[str], stop_words : list[str]) -> set[str]:
     filtered_words = [word.lower() for word in words if word.lower() not in stop_words]
     return set(filtered_words)
 
-def remove_non_alpha(words : list[str]) -> set[str]:
-    filtered_words = [word.lower() for word in words if word.isalpha()]
-    return set(filtered_words)
-
-def remove_short_words(words : list[str], min_length : int) -> set[str]:
-    filtered_words = [word.lower() for word in words if len(word) > min_length]
-    return set(filtered_words)
-
-def remove_non_nouns_adjectives(words : list[str]) -> set[str]:
-    tagged_words = nltk.pos_tag(words, 'universal', 'eng')
-    filtered_words = [word for (word, part_of_speech) in tagged_words if part_of_speech in ['NOUN', 'ADJ']]
-    return filtered_words
-
-def filter_words(words : list[str], stop_words : list[str], min_length : int) -> set[str]:
-    filtered_words = remove_stop_words(words, stop_words)
-    filtered_words = remove_non_alpha(filtered_words)
-    filtered_words = remove_short_words(filtered_words, min_length)
-    filtered_words = remove_non_nouns_adjectives(filtered_words)
-    return set(filtered_words)
+def get_keywords(words: list[str], stop_words: list[str], min_length: int) -> set[str]:
+    """
+    Refines a word list by applying lowercasing, stop-word removal, 
+    alpha-only filtering, length constraints, and POS tagging in one pass.
+    """
+    # Standardize stop_words for faster lookups
+    stop_words_set = {sw.lower() for sw in stop_words}
+    
+    # Pre-process POS tags to avoid redundant calls inside a loop
+    tagged_words = nltk.pos_tag(words, tagset='universal', lang='eng')
+    
+    return {
+        word.lower() for word, pos in tagged_words
+        if word.isalpha() 
+        and word.lower() not in stop_words_set
+        and len(word) > min_length
+        and pos in {'NOUN', 'ADJ'}
+    }
 
 if __name__ == "__main__":
     model = load_model('all-MiniLM-L6-v2')
 
     resume_text = open('data/resume_text.txt', encoding='utf-8').read()
-    job_description_text = open('data/job_description_text.txt', encoding='utf-8').read()
+    jd_text = open('data/job_description_text.txt', encoding='utf-8').read()
 
-    similarity_score = calculate_similarity_score(model, resume_text, job_description_text)
+    similarity_score = calculate_similarity_score(model, resume_text, jd_text)
     print(similarity_score)
 
     resume_words = word_tokenize(resume_text)
-    job_description_words = word_tokenize(job_description_text)
+    jd_words = word_tokenize(jd_text)
 
     stop_words = set(stopwords.words('english'))
 
-    filtered_resume_words = filter_words(resume_words, stop_words, 2)
-    filtered_jd_words = filter_words(job_description_words, stop_words, 2)
-    difference = filtered_jd_words - filtered_resume_words
+    resume_keywords = get_keywords(resume_words, stop_words, 2)
+    jd_keywords = get_keywords(jd_words, stop_words, 2)
+    missing_keywords = jd_keywords - resume_keywords
 
-    print(difference)
+    print(missing_keywords)
