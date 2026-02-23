@@ -1,6 +1,6 @@
 import streamlit as st
-from src.parser import extract_text
-from src.processor import load_model, calculate_similarity_score, get_stop_words, get_keywords
+from src.parser import extract_text, chunk_resume
+from src.processor import load_model, calculate_section_similarities, get_stop_words, get_keywords
 from src.generator import generate_resume_advice
 
 # 1. Page Setup
@@ -38,7 +38,48 @@ if st.button("Calculate Match Score", type="primary"):
                 resume_text = extract_text(uploaded_file)
                 
                 # Use your src/processor logic
-                cosine_score = calculate_similarity_score(model, resume_text, job_description)
+                resume_sections = chunk_resume(resume_text)
+                similarity_scores = calculate_section_similarities(model, resume_sections, job_description)
+
+                st.success("Analysis Complete!")
+
+                # 1. Calculate an aggregate score dynamically from whatever sections were found
+                # We filter out CONTACT INFO so it doesn't skew the average
+                meaningful_scores = [score for section, score in similarity_scores.items() if section != "CONTACT INFO"]
+                overall_score = sum(meaningful_scores) / len(meaningful_scores) if meaningful_scores else 0
+
+                # 2. Display Overall Metric
+                st.metric(label="Overall Match Quality", value=f"{overall_score:.2f}")
+                st.progress(min(max(overall_score, 0.0), 1.0)) # Ensure it's between 0 and 1
+
+                st.write("### 📑 Section Scorecard")
+                st.caption("Similarity scores for each identified section of your resume:")
+
+                # 3. Dynamic Grid for Dictionary Sections
+                # We use 3 columns for a balanced look
+                cols = st.columns(3)
+                current_col = 0
+
+                for section, score in similarity_scores.items():
+                    # Skip contact info as it's not a performance metric
+                    if section == "CONTACT INFO":
+                        continue
+                    
+                    with cols[current_col % 3]:
+                        # Visual color coding based on similarity
+                        if score > 0.75:
+                            sentiment = "Inverse" # Streamlit's way to highlight
+                            label_prefix = "✅"
+                        elif score > 0.5:
+                            label_prefix = "⚠️"
+                        else:
+                            label_prefix = "❌"
+                            
+                        st.metric(label=f"{label_prefix} {section}", value=f"{score:.2f}")
+                        
+                    current_col += 1
+
+                st.divider()
 
                 resume_keywords = get_keywords(resume_text, stop_words, 2)
                 jd_keywords = get_keywords(job_description, stop_words, 2)
@@ -47,10 +88,6 @@ if st.button("Calculate Match Score", type="primary"):
                 missing_keywords = jd_keywords - resume_keywords
 
                 keyword_matching_score = len(matched_keywords) / len(jd_keywords)
-
-                # Display Result
-                st.success("Analysis Complete!")
-                st.metric(label="Similarity Score", value=f"{cosine_score:.2f}")
                 
                 st.metric(label="Keyword Coverage", value=f"{keyword_matching_score:.2%}")
                 col1, col2 = st.columns(2)
@@ -62,17 +99,13 @@ if st.button("Calculate Match Score", type="primary"):
                     st.write("### ❌ Missing")
                     st.write(", ".join(list(missing_keywords)[:15]))
                                 
-                # Bonus: Visual feedback
-                if cosine_score > 0.7:
-                    st.balloons()
-
                 # Generate Advice
                 api_key = st.secrets["GEMINI_API_KEY"]
                 
                 advice = generate_resume_advice(
                     resume_text=resume_text,
                     job_description=job_description,
-                    cosine_score=cosine_score,
+                    cosine_scores=similarity_scores,
                     missing_keywords=missing_keywords,
                     api_key=api_key
                 )

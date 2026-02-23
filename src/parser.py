@@ -2,6 +2,8 @@ import pdfplumber
 import unicodedata
 import re
 
+from typing import Dict
+
 def clean_text(text: str) -> str:
     """
     Normalizes and cleans extracted text by removing non-ASCII characters.
@@ -77,7 +79,7 @@ def chunk_section(header : str, content : str, max_tokens : int, overlap : int) 
     
     return chunks
 
-def chunk_resume(text : str) -> list[str]:
+def chunk_resume(text : str) -> Dict[str, str]:
     header_pattern = r"^\s*(SUMMARY|OBJECTIVE|EXPERIENCE|EDUCATION|SKILLS|PROJECTS|CERTIFICATIONS|AWARDS|ADDITIONAL EXPERIENCE|SKILLS AND CERTIFICATIONS)\s*$"
 
     sections = re.split(header_pattern, text, flags=re.MULTILINE | re.IGNORECASE)

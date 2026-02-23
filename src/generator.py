@@ -4,7 +4,7 @@ from google import genai
 def generate_resume_advice(
     resume_text: str, 
     job_description: str, 
-    cosine_score: float, 
+    cosine_scores: float, 
     missing_keywords: set, 
     api_key: str
 ) -> str:
@@ -19,7 +19,7 @@ def generate_resume_advice(
         You are an expert career coach. 
 
         Data:
-        - Cosine Similarity Score: {cosine_score:.2f}
+        - Cosine Similarity Scores per Resume Section: {cosine_scores}
         - Missing Keywords: {missing_keywords}
 
         Context:
@@ -27,7 +27,11 @@ def generate_resume_advice(
         - Job Description: {job_description}
 
         Task:
-        Based on the missing keywords, identify exactly which bullet points in the user's resume should be rewritten. Provide 3 specific, actionable examples. In 3-4 sentences, explain what they could do better in their resume to be more competitive for this job.
+        Based on the missing keywords and the cosine similarities per section, identify weakpoints in the resume that can be improved.
+        Provide feedback by showing the original line and then your suggested rewritten line.
+        Ensure that any rewrites are grounded in user's resume. Do not write line improvements that may make up accomplishments the user does not have.
+        Ensure improvements are made with the goal of improving the resume's alignment with the job description.
+        At the end, provide a short paragraph assessing the user's competitiveness for the job.
     """
 
     # 3. Call the model and return the text

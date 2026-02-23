@@ -1,4 +1,5 @@
 from sentence_transformers import SentenceTransformer, util
+from typing import Dict
 import streamlit as st
 import nltk
 nltk.download('stopwords')
@@ -42,6 +43,20 @@ def calculate_similarity_score(
 
     # .item() extracts the standard Python float from the PyTorch tensor
     return cosine_scores[0][0].item()
+
+def calculate_section_similarities(
+    model : SentenceTransformer,
+    chunked_resume : Dict[str, list[str]],
+    job_description : str) -> Dict[str, float]:
+    section_scores = {}
+
+    for section, chunks in chunked_resume.items():
+        best_score = 0
+        for chunk in chunks:
+            chunk_score = calculate_similarity_score(model, chunk, job_description)
+            best_score = chunk_score if chunk_score > best_score else best_score
+        section_scores[section] = best_score
+    return section_scores
 
 def load_model(model_name: str = 'all-MiniLM-L6-v2') -> SentenceTransformer:
     """
