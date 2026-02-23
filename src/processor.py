@@ -1,4 +1,5 @@
 from sentence_transformers import SentenceTransformer, util
+import streamlit as st
 import nltk
 nltk.download('stopwords')
 nltk.download('punkt') # Required for tokenization
@@ -64,11 +65,19 @@ def remove_stop_words(words : list[str], stop_words : list[str]) -> set[str]:
     filtered_words = [word.lower() for word in words if word.lower() not in stop_words]
     return set(filtered_words)
 
-def get_keywords(words: list[str], stop_words: list[str], min_length: int) -> set[str]:
+@st.cache_data
+def get_stop_words() -> set[str]:
+    stop_words = set(stopwords.words('english'))
+    return stop_words
+
+def get_keywords(text: str, stop_words: list[str], min_length: int) -> set[str]:
     """
     Refines a word list by applying lowercasing, stop-word removal, 
     alpha-only filtering, length constraints, and POS tagging in one pass.
     """
+    # Tokenize words
+    words = word_tokenize(text)
+    
     # Standardize stop_words for faster lookups
     stop_words_set = {sw.lower() for sw in stop_words}
     
@@ -92,13 +101,10 @@ if __name__ == "__main__":
     similarity_score = calculate_similarity_score(model, resume_text, jd_text)
     print(similarity_score)
 
-    resume_words = word_tokenize(resume_text)
-    jd_words = word_tokenize(jd_text)
+    stop_words = get_stop_words()
 
-    stop_words = set(stopwords.words('english'))
-
-    resume_keywords = get_keywords(resume_words, stop_words, 2)
-    jd_keywords = get_keywords(jd_words, stop_words, 2)
+    resume_keywords = get_keywords(resume_text, stop_words, 2)
+    jd_keywords = get_keywords(jd_text, stop_words, 2)
     missing_keywords = jd_keywords - resume_keywords
 
     print(missing_keywords)

@@ -1,6 +1,6 @@
 import streamlit as st
 from src.parser import extract_text
-from src.processor import load_model, calculate_similarity_score
+from src.processor import load_model, calculate_similarity_score, get_stop_words, get_keywords
 
 # 1. Page Setup
 st.set_page_config(page_title="Career Match AI", page_icon="🚀")
@@ -17,6 +17,7 @@ def get_model():
     return load_model('all-MiniLM-L6-v2')
 
 model = get_model()
+stop_words = get_stop_words()
 
 # 3. Input UI
 st.divider()
@@ -36,14 +37,32 @@ if st.button("Calculate Match Score", type="primary"):
                 resume_text = extract_text(uploaded_file)
                 
                 # Use your src/processor logic
-                score = calculate_similarity_score(model, resume_text, job_description)
-                
+                cosine_score = calculate_similarity_score(model, resume_text, job_description)
+
+                resume_keywords = get_keywords(resume_text, stop_words, 2)
+                jd_keywords = get_keywords(job_description, stop_words, 2)
+
+                matched_keywords = resume_keywords & jd_keywords
+                missing_keywords = jd_keywords - resume_keywords
+
+                keyword_matching_score = len(matched_keywords) / len(jd_keywords)
+
                 # Display Result
                 st.success("Analysis Complete!")
-                st.metric(label="Similarity Score", value=f"{score:.2f}")
+                st.metric(label="Similarity Score", value=f"{cosine_score:.2f}")
                 
+                st.metric(label="Keyword Coverage", value=f"{keyword_matching_score:.2%}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("### ✅ Matched")
+                    st.write(", ".join(list(matched_keywords)[:15])) # Show top 15
+
+                with col2:
+                    st.write("### ❌ Missing")
+                    st.write(", ".join(list(missing_keywords)[:15]))
+                                
                 # Bonus: Visual feedback
-                if score > 0.7:
+                if cosine_score > 0.7:
                     st.balloons()
                     
             except Exception as e:
