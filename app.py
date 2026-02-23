@@ -1,6 +1,7 @@
 import streamlit as st
 from src.parser import extract_text
 from src.processor import load_model, calculate_similarity_score, get_stop_words, get_keywords
+from src.generator import generate_resume_advice
 
 # 1. Page Setup
 st.set_page_config(page_title="Career Match AI", page_icon="🚀")
@@ -64,6 +65,21 @@ if st.button("Calculate Match Score", type="primary"):
                 # Bonus: Visual feedback
                 if cosine_score > 0.7:
                     st.balloons()
+
+                # Generate Advice
+                api_key = st.secrets["GEMINI_API_KEY"]
+                
+                advice = generate_resume_advice(
+                    resume_text=resume_text,
+                    job_description=job_description,
+                    cosine_score=cosine_score,
+                    missing_keywords=missing_keywords,
+                    api_key=api_key
+                )
+                
+                # Display Result
+                st.write("### 🤖 Career Coach Advice")
+                st.write(advice)
                     
             except Exception as e:
                 st.error(f"An error occurred during processing: {e}")
