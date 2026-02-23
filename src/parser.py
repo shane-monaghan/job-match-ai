@@ -1,5 +1,6 @@
 import pdfplumber
 import unicodedata
+import re
 
 def clean_text(text: str) -> str:
     """
@@ -53,8 +54,67 @@ def extract_text(resume_path : str) -> str:
     entire_text = entire_text.strip()
 
     return clean_text(entire_text)
-            
+
+def chunk_section(header : str, content : str, max_tokens : int, overlap : int) -> list[str]:
+    content_tokens = content.split()
+
+    if len(content_tokens) <= max_tokens:
+        return [f"{header}: {content}"]
+    
+    step_size = max_tokens - overlap
+    chunks = []
+
+    for i in range(0, len(content_tokens), step_size):
+        segment = content_tokens[i : i + max_tokens]
+
+        prefix = f"{header}:" if i == 0 else f"{header} (Continued):"
+        chunk_text = f"{prefix} {' '.join(segment)}"
+        
+        chunks.append(chunk_text)
+
+        if i + max_tokens >= len(content_tokens):
+            break
+    
+    return chunks
+
+def chunk_resume(text : str) -> list[str]:
+    header_pattern = r"^\s*(SUMMARY|OBJECTIVE|EXPERIENCE|EDUCATION|SKILLS|PROJECTS|CERTIFICATIONS|AWARDS|ADDITIONAL EXPERIENCE|SKILLS AND CERTIFICATIONS)\s*$"
+
+    sections = re.split(header_pattern, text, flags=re.MULTILINE | re.IGNORECASE)
+
+    resume_sections = {}
+    if sections:
+        resume_sections["CONTACT INFO"] = [sections[0].strip()]
+
+    for i in range(1, len(sections), 2):
+        header = sections[i].strip().upper()
+        content = sections[i+1].strip()
+
+        chunks = chunk_section(header, content, max_tokens=150, overlap=20)
+
+        resume_sections[header] = chunks
+    
+    return resume_sections
+
+
 if __name__ == "__main__":
-    # This only runs if you run this file directly
     test_path = "data/Resume.pdf" 
-    print(extract_text(test_path))
+    
+    # 1. Extract and Clean
+    print("--- Extracting Text ---")
+    raw_text = extract_text(test_path)
+    
+    # 2. Chunk by Section and Tokens
+    print("--- Chunking Resume ---")
+    structured_resume = chunk_resume(raw_text)
+    
+    # 3. Display Results
+    print(f"\nFound {len(structured_resume)} distinct sections.\n")
+    
+    for section, chunks in structured_resume.items():
+        print(f"[{section}] - {len(chunks)} chunk(s)")
+        for idx, c in enumerate(chunks):
+            # Print a snippet of each chunk to verify the Header injection
+            snippet = c[:100].replace('\n', ' ')
+            print(f"  Chunk {idx+1}: {snippet}...")
+        print("-" * 30)
