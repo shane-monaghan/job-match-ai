@@ -1,7 +1,7 @@
 from sentence_transformers import util
 from typing import Any
 
-def calculate_similarity_score(
+def calculate_cosine_similarity(
     resume_embedding: Any, 
     jd_embedding: Any
 ) -> float:
@@ -55,7 +55,7 @@ def calculate_section_similarities(
         best_score = 0
 
         for chunk_vec in chunk_vectors:
-            chunk_score = calculate_similarity_score(chunk_vec, jd_vector)
+            chunk_score = calculate_cosine_similarity(chunk_vec, jd_vector)
 
             best_score = chunk_score if chunk_score > best_score else best_score
 
