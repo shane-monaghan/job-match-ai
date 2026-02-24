@@ -84,10 +84,7 @@ if st.button("Calculate Match Score", type="primary"):
                 resume_keywords = get_keywords(resume_text, stop_words, 2)
                 jd_keywords = get_keywords(job_description, stop_words, 2)
 
-                matched_keywords = resume_keywords & jd_keywords
-                missing_keywords = jd_keywords - resume_keywords
-
-                keyword_matching_score = len(matched_keywords) / len(jd_keywords)
+                matched_keywords, missing_keywords, keyword_matching_score = calculate_keyword_coverage(resume_keywords, jd_keywords)
                 
                 st.metric(label="Keyword Coverage", value=f"{keyword_matching_score:.2%}")
                 col1, col2 = st.columns(2)

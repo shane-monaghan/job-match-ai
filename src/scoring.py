@@ -1,6 +1,43 @@
 from sentence_transformers import util
 from typing import Any
 
+def calculate_keyword_coverage(
+    resume_keyword_set : set,
+    jd_keyword_set : set
+) -> tuple[set, set, float]:
+    """Calculates the keyword coverage between a resume and a job description.
+
+    This function uses set operations to determine which key terms from a job 
+    description are present in a candidate's resume and which are missing. It 
+    also computes a normalized score representing the percentage of job description 
+    keywords successfully matched.
+
+    Args:
+        resume_keyword_set (set): A set of strings representing the keywords 
+            extracted from the candidate's resume.
+        jd_keyword_set (set): A set of strings representing the required keywords 
+            extracted from the job description.
+
+    Returns:
+        tuple[set, set, float]: A tuple containing three elements:
+            - matched_keywords (set): The intersection of keywords present in 
+              both the resume and the job description.
+            - missing_keywords (set): The difference of keywords present in the 
+              job description but missing from the resume.
+            - keyword_matching_score (float): A coverage ratio (typically between 
+              0.0 and 1.0) calculated as the number of matched keywords divided 
+              by the total number of job description keywords.
+
+    Raises:
+        ZeroDivisionError: If `jd_keyword_set` is empty.
+    """
+    matched_keywords = resume_keyword_set & jd_keyword_set
+    missing_keywords = jd_keyword_set - resume_keyword_set
+
+    keyword_matching_score = len(matched_keywords) / len(jd_keyword_set)
+    
+    return matched_keywords, missing_keywords, keyword_matching_score
+
 def calculate_cosine_similarity(
     resume_embedding: Any, 
     jd_embedding: Any
