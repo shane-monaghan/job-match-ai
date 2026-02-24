@@ -1,6 +1,5 @@
 import streamlit as st
-from src.parser import extract_text, chunk_resume
-from src.processor import load_model, calculate_section_similarities, get_stop_words, get_keywords
+from src import ingestion, chunking, nlp_extraction, embeddings, scoring
 from src.generator import generate_resume_advice
 
 # 1. Page Setup
@@ -11,14 +10,16 @@ st.markdown("""
     Upload your resume and paste a job description to see how well they align.
 """)
 
-# 2. Cached Model Loading
-# This ensures the model only loads ONCE when the app starts
+# 2. Cached Initialization & Model Loading
+# This sets up NLTK and the AI model ONCE when the app starts
+nlp_extraction.setup_nltk()
+
 @st.cache_resource
 def get_model():
-    return load_model('all-MiniLM-L6-v2')
+    return embeddings.load_model('all-MiniLM-L6-v2')
 
 model = get_model()
-stop_words = get_stop_words()
+stop_words = nlp_extraction.get_stop_words()
 
 # 3. Input UI
 st.divider()
@@ -34,12 +35,38 @@ if st.button("Calculate Match Score", type="primary"):
     if uploaded_file is not None and job_description.strip() != "":
         with st.spinner("Analyzing..."):
             try:
-                # Use your src/parser logic
-                resume_text = extract_text(uploaded_file)
+                # ==========================================
+                # THE ORCHESTRATION PIPELINE
+                # ==========================================
                 
-                # Use your src/processor logic
-                resume_sections = chunk_resume(resume_text)
-                similarity_scores = calculate_section_similarities(model, resume_sections, job_description)
+                # 1. Ingestion Layer
+                resume_text = ingestion.extract_text(uploaded_file)
+                
+                # 2. Chunking Layer
+                resume_sections = chunking.chunk_resume(resume_text)
+                
+                # 3. NLP Extraction Layer
+                resume_keywords = nlp_extraction.get_keywords(resume_text, stop_words, 2)
+                jd_keywords = nlp_extraction.get_keywords(job_description, stop_words, 2)
+                
+                # 4. Embedding Layer (Heavy ML)
+                jd_vector = embeddings.get_embedding(job_description, model)
+                
+                resume_vectors_dict = {}
+                for section, chunks in resume_sections.items():
+                    # Convert each text chunk in the section into a tensor
+                    resume_vectors_dict[section] = [
+                        embeddings.get_embedding(chunk, model) for chunk in chunks
+                    ]
+                
+                # 5. Scoring Layer (Pure Math)
+                similarity_scores = scoring.calculate_section_similarities(resume_vectors_dict, jd_vector)
+                matched_keywords, missing_keywords, keyword_matching_score = scoring.calculate_keyword_coverage(resume_keywords, jd_keywords)
+
+
+                # ==========================================
+                # PRESENTATION LAYER (UI)
+                # ==========================================
 
                 st.success("Analysis Complete!")
 
@@ -81,11 +108,6 @@ if st.button("Calculate Match Score", type="primary"):
 
                 st.divider()
 
-                resume_keywords = get_keywords(resume_text, stop_words, 2)
-                jd_keywords = get_keywords(job_description, stop_words, 2)
-
-                matched_keywords, missing_keywords, keyword_matching_score = calculate_keyword_coverage(resume_keywords, jd_keywords)
-                
                 st.metric(label="Keyword Coverage", value=f"{keyword_matching_score:.2%}")
                 col1, col2 = st.columns(2)
                 with col1:
