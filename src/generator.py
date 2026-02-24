@@ -3,9 +3,11 @@ from google import genai
 
 def generate_resume_advice(
     resume_text: str, 
-    job_description: str, 
-    cosine_scores: float, 
-    missing_keywords: set, 
+    jd_text: str, 
+    overall_match_score: float, 
+    matched_keywords_list: set,
+    missing_keywords_list : set,
+    keyword_coverage_percentage : float, 
     api_key: str
 ) -> str:
     """
@@ -15,29 +17,41 @@ def generate_resume_advice(
     client = genai.Client(api_key=api_key)
 
     # 2. Construct your massive f-string prompt here
-    prompt = f"""
-        You are an expert career coach. 
+    llm_prompt = f"""
+    **System Persona:**
+    You are an Expert Technical Recruiter and Senior Engineering Hiring Manager at a top-tier tech company. Your job is to analyze a candidate's resume against a specific Job Description (JD) and provide highly actionable, realistic advice to improve their ATS (Applicant Tracking System) performance and appeal to human reviewers.
 
-        Data:
-        - Cosine Similarity Scores per Resume Section: {cosine_scores}
-        - Missing Keywords: {missing_keywords}
+    **Inputs & Calculated Metrics:**
+    - Overall Match Score: {overall_match_score}
+    - Keyword Coverage: {keyword_coverage_percentage}%
+    - Matched Keywords: {matched_keywords_list}
+    - Missing Keywords: {missing_keywords_list}
+    - Resume Text: {resume_text}
+    - Job Description: {jd_text}
 
-        Context:
-        - User Resume: {resume_text}
-        - Job Description: {job_description}
+    **Objective:**
+    Review the provided Resume, Job Description, and Calculated Metrics. Identify areas where the candidate's existing experience aligns with the JD but is currently understated. Suggest targeted rewrites for 3-4 specific bullet points to naturally incorporate the missing keywords and improve the overall match score.
 
-        Task:
-        Based on the missing keywords and the cosine similarities per section, identify weakpoints in the resume that can be improved.
-        Provide feedback by showing the original line and then your suggested rewritten line.
-        Ensure that any rewrites are grounded in user's resume. Do not write line improvements that may make up accomplishments the user does not have.
-        Ensure improvements are made with the goal of improving the resume's alignment with the job description.
-        At the end, provide a short paragraph assessing the user's competitiveness for the job.
+    **Strict Guardrails & Rules:**
+    1. **NO Keyword Stuffing:** Do not artificially force exact JD keywords into sentences where they do not naturally belong. Focus on *semantic alignment*. If the JD asks for "scalable systems," highlighting an accomplishment about processing "large-scale datasets" is sufficient.
+    2. **NO Meta-Commentary:** Resume bullets must be in the format of Action Verb + Context + Result (e.g., "Engineered X using Y, resulting in Z"). Do NOT add phrases like "Demonstrated ability to...".
+    3. **NO Hallucinations:** You may only use facts, metrics, and tools explicitly stated in the provided resume. Do not invent experience, seniority, or skills.
+    4. **Prioritize Hard Metrics:** If the original bullet has a metric (e.g., "reduced latency", "94% accuracy"), the rewritten bullet MUST retain that metric.
+
+    **Required Output Format:**
+    **1. Scorecard:** Present the Overall Match Score and Keyword Coverage as a clean, simple summary.
+    **2. Thematic Alignment Assessment:** Briefly explain (2-3 sentences) how the candidate's actual experience matches the core problems the engineering team is trying to solve.
+    **3. Strategic Keyword Gaps:** Identify the most critical `Missing Keywords` from the inputs and explain *why* they matter for this specific role.
+    **4. High-Impact Rewrites:** Provide 3-4 suggested bullet point rewrites. For each, show the:
+    * *Original Bullet:*
+    * *Why it needs changing:* (Focus on how integrating specific missing keywords or JD themes improves the bullet).
+    * *Revised Bullet:* (Strictly adhering to the Action + Context + Result format).
     """
 
     # 3. Call the model and return the text
     response = client.models.generate_content(
         model='gemini-2.5-flash',
-        contents=prompt
+        contents=llm_prompt
     )
     
     return response.text

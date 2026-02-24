@@ -123,9 +123,11 @@ if st.button("Calculate Match Score", type="primary"):
                 
                 advice = generate_resume_advice(
                     resume_text=resume_text,
-                    job_description=job_description,
-                    cosine_scores=similarity_scores,
-                    missing_keywords=missing_keywords,
+                    jd_text=job_description,
+                    overall_match_score=overall_score,
+                    matched_keywords_list=matched_keywords,
+                    missing_keywords_list=missing_keywords,
+                    keyword_coverage_percentage=keyword_matching_score,
                     api_key=api_key
                 )
                 
