@@ -1,13 +1,24 @@
-import streamlit as st
 import nltk
-nltk.download('stopwords')
-nltk.download('punkt') # Required for tokenization
-nltk.download('punkt_tab')
-nltk.download('averaged_perceptron_tagger_eng') # The engine that identifies grammar
-nltk.download('universal_tagset') # Simplifies tags to 'NOUN', 'ADJ', etc.
+import streamlit as st
 
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+
+@st.cache_resource
+def setup_nltk():
+    """
+    Downloads required NLTK datasets. 
+    Using @st.cache_resource ensures this executes exactly ONCE 
+    per app session, drastically speeding up reload times.
+    """
+    # quiet=True stops it from printing "Downloading package..." to the console every time
+    nltk.download('stopwords', quiet=True)
+    nltk.download('punkt', quiet=True)
+    nltk.download('punkt_tab', quiet=True)
+    nltk.download('averaged_perceptron_tagger_eng', quiet=True)
+    nltk.download('universal_tagset', quiet=True)
+    
+    return True # Streamlit cache functions need to return something
 
 def remove_stop_words(words : list[str], stop_words : list[str]) -> set[str]:
     filtered_words = [word.lower() for word in words if word.lower() not in stop_words]
