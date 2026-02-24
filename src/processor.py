@@ -1,6 +1,3 @@
-from sentence_transformers import SentenceTransformer, util
-from typing import Dict
-from torch import Tensor
 import streamlit as st
 import nltk
 nltk.download('stopwords')
@@ -9,50 +6,8 @@ nltk.download('punkt_tab')
 nltk.download('averaged_perceptron_tagger_eng') # The engine that identifies grammar
 nltk.download('universal_tagset') # Simplifies tags to 'NOUN', 'ADJ', etc.
 
-import numpy as np
-
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-
-def calculate_similarity_score(
-    resume_embedding: Tensor, 
-    jd_embedding: Tensor
-) -> float:
-    """
-    Calculates the semantic similarity between a resume and a job description.
-
-    This function transforms raw text into vector embeddings using the provided
-    SentenceTransformer model and computes the cosine similarity to determine 
-    how closely the candidate's profile matches the role requirements.
-
-    Args:
-        model (SentenceTransformer): The pre-trained AI model used for encoding.
-        resume_text (str): The cleaned text extracted from a candidate's resume.
-        job_description (str): The text content of the target job posting.
-
-    Returns:
-        float: A similarity score, typically between 0.0 and 1.0, where 
-            higher values indicate a stronger semantic match.
-    """
-    # Calculate the cosine of the angle between the two embeddings
-    cosine_scores = util.cos_sim(resume_embedding, jd_embedding)
-
-    # .item() extracts the standard Python float from the PyTorch tensor
-    return cosine_scores[0][0].item()
-
-def calculate_section_similarities(
-    model : SentenceTransformer,
-    chunked_resume : Dict[str, list[str]],
-    job_description : str) -> Dict[str, float]:
-    section_scores = {}
-
-    for section, chunks in chunked_resume.items():
-        best_score = 0
-        for chunk in chunks:
-            chunk_score = calculate_similarity_score(model, chunk, job_description)
-            best_score = chunk_score if chunk_score > best_score else best_score
-        section_scores[section] = best_score
-    return section_scores
 
 def remove_stop_words(words : list[str], stop_words : list[str]) -> set[str]:
     filtered_words = [word.lower() for word in words if word.lower() not in stop_words]
@@ -84,20 +39,3 @@ def get_keywords(text: str, stop_words: list[str], min_length: int) -> set[str]:
         and len(word) > min_length
         and pos in {'NOUN', 'ADJ'}
     }
-
-if __name__ == "__main__":
-    model = load_model('all-MiniLM-L6-v2')
-
-    resume_text = open('data/resume_text.txt', encoding='utf-8').read()
-    jd_text = open('data/job_description_text.txt', encoding='utf-8').read()
-
-    similarity_score = calculate_similarity_score(model, resume_text, jd_text)
-    print(similarity_score)
-
-    stop_words = get_stop_words()
-
-    resume_keywords = get_keywords(resume_text, stop_words, 2)
-    jd_keywords = get_keywords(jd_text, stop_words, 2)
-    missing_keywords = jd_keywords - resume_keywords
-
-    print(missing_keywords)
