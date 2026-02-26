@@ -2,13 +2,13 @@
 
 An intelligent resume-to-job-description matching system powered by NLP embeddings and semantic analysis. Analyzes how well your resume aligns with job postings and provides actionable recommendations for improvement.
 
-## 📋 Overview
+## Overview
 
 **Career Match AI** is a web-based application built with Streamlit that leverages state-of-the-art NLP techniques to evaluate resume-job description alignment. Instead of simple keyword matching, the system uses semantic embeddings to understand the meaning and context of both documents, providing a more accurate and nuanced matching score.
 
 The application generates multiple scoring metrics and uses AI to produce targeted, actionable advice for improving your resume's alignment with specific job postings.
 
-## 🎯 Goals
+## Goals
 
 1. **Accurate Semantic Matching**: Move beyond keyword matching to understand meaningful alignment between resume skills/experience and job requirements.
 
@@ -20,7 +20,7 @@ The application generates multiple scoring metrics and uses AI to produce target
 
 5. **ATS Optimization**: Help candidates optimize their resumes for both Applicant Tracking Systems (ATS) and human recruiters.
 
-## 🔧 Methodology
+## Methodology
 
 The system employs a modular pipeline architecture with six distinct processing stages:
 
@@ -83,7 +83,7 @@ For each word in text:
 - Provides 3-4 targeted bullet point rewrites
 - Ensures recommendations are realistic, avoid keyword stuffing, and maintain factual accuracy
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -122,7 +122,7 @@ For each word in text:
          └─────────────────┘
 ```
 
-## 💻 Installation
+## Installation
 
 ### Prerequisites
 - Python 3.8+
@@ -158,7 +158,7 @@ For each word in text:
    - Paste a job description
    - Click "Calculate Match Score"
 
-## 📊 Key Libraries & Models
+## Key Libraries & Models
 
 | Component | Library | Purpose |
 |-----------|---------|---------|
@@ -170,7 +170,7 @@ For each word in text:
 | AI Recommendations | Google Gemini | LLM-based advice generation |
 | Data Processing | Pandas, NumPy | General data manipulation |
 
-## 📈 Output Metrics
+## Output Metrics
 
 The application provides multiple levels of analysis:
 
@@ -193,7 +193,7 @@ The application provides multiple levels of analysis:
    - Strategic gap analysis
    - 3-4 targeted bullet point rewrites with explanations
 
-## ⚠️ Limitations
+## Limitations
 
 ### 1. **Model Limitations**
 - **Embedding Model Constraints**: The `all-MiniLM-L6-v2` model is optimized for semantic similarity but has:
@@ -252,74 +252,12 @@ The application provides multiple levels of analysis:
 - **Model Size**: SentenceTransformer model (~80 MB) must load into memory
 - **Latency**: Embedding generation for long documents may take 5-15 seconds
 
-## 🔮 Future Improvements
+## Future Improvements
 
 - [ ] Support for multiple resume formats (DOCX, HTML, plain text)
 - [ ] Batch processing interface for multiple job opportunities
-- [ ] Fine-tuned embedding models for specific industries (finance, healthcare, tech)
-- [ ] Historical tracking of resume versions and improvements over time
 - [ ] Integration with LinkedIn and job boards for automated job matching
-- [ ] Advanced visualization of semantic space (t-SNE projections)
-- [ ] Industry-specific keyword weighting and benchmarking
-- [ ] Support for video resume analysis (experimental)
 - [ ] Multi-language support
 - [ ] Resume template recommendations based on industry
-
-## 📝 Usage Tips
-
-1. **For Best Results:**
-   - Use well-structured, standard resume formats
-   - Ensure job descriptions are complete and untruncated
-   - Use recent embeddings model versions for latest NLP capabilities
-   - Keep resumes to 1-2 pages for optimal processing
-
-2. **Interpreting Scores:**
-   - Overall score > 0.75: Strong semantic alignment, resume is well-tailored
-   - Overall score 0.5-0.75: Moderate alignment, targeted improvements recommended
-   - Overall score < 0.5: Significant gaps, consider whether the role is a good fit
-
-3. **Using Recommendations:**
-   - The AI suggestions are starting points, not final copy
-   - Verify all facts and metrics before updating your resume
-   - Tailor recommendations further to match your authentic experience
-   - Ensure changes don't introduce factual inaccuracies
-
-## 🤝 Contributing
-
-Feedback and contributions are welcome. Areas for improvement:
-- Enhanced resume parsing logic
-- Additional scoring metrics
-- Integration with ATS systems
-- Multi-language support
-- Performance optimizations
-
-## 📄 License
-
-This project is provided as-is for educational and personal use.
-
-## ❓ FAQ
-
-**Q: Is my resume data stored or shared?**
-A: Resumes are processed in-memory only. If you use the AI recommendations feature, text is sent to Google's Gemini API. Check Google's data retention policies for details.
-
-**Q: Can I use this for multiple job applications?**
-A: Yes, you can upload the same resume and test it against different job descriptions repeatedly.
-
-**Q: What if my resume format is unusual?**
-A: The system works best with standard resume formats. If parsing fails, try reformatting sections with clear headers.
-
-**Q: How accurate are the scores?**
-A: Scores are relative indicators of semantic similarity, not absolute measures. Use them to identify patterns and areas for improvement, not as binary accept/reject decisions.
-
-**Q: Can I improve my score?**
-A: Yes! Use the AI recommendations to incorporate missing keywords naturally into your resume, and ensure your actual experience aligns with what you're claiming.
-
-**Q: Does this guarantee I'll get an interview?**
-A: No. A high match score improves your odds, but many factors beyond resume alignment affect hiring decisions. Use this tool as one part of your job search strategy.
-
-**Q: What about resume screening by ATS systems?**
-A: This tool optimizes for semantic alignment and keyword coverage, which helps with both ATS systems and human reviewers. However, always follow application instructions and ATS guidelines in job postings.
-
----
 
 **Last Updated:** February 2026
